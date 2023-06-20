@@ -5,6 +5,15 @@ package milter
 import "encoding/binary"
 import "fmt"
 import "strconv"
+import "strings"
+
+const qt_length = 40
+func qt(in string)(string) {
+	if len(in) > qt_length {
+		return fmt.Sprintf("%q...", in[:qt_length])
+	}
+	return fmt.Sprintf("%q", in)
+}
 
 const MilterVersion = 2
 
@@ -42,6 +51,7 @@ const (
 	SMFIR_ERROR MsgType = 0xff
 )
 
+// Display MsgType as string for debug purpose
 func (b *MsgType)String()(string) {
 	switch *b {
 	case SMFIC_ABORT:      return "ABORT"
@@ -120,6 +130,14 @@ func toMacroStep(b byte)(MacroStep) {
 	return MacroStep(b)
 }
 
+// Display MacroStep as string for debug purpose
+func (ms *MacroStep)String()(string) {
+	var msgtype MsgType
+
+	msgtype = MsgType(*ms)
+	return msgtype.String()
+}
+
 type FamilyCode byte
 
 // SMFIA means Sendmail Milter Functions Internal Actions. These constants
@@ -141,6 +159,7 @@ const (
 	SMFIA_ERROR FamilyCode = FamilyCode(0xff)
 )
 
+// Display FamilyCode as string for debug purpose
 func (n *FamilyCode)String()(string) {
 	switch *n {
 	case SMFIA_UNKNOWN: return "unknown"
@@ -190,6 +209,20 @@ const (
 	SMFIF_ALL ActionFlag = SMFIF_ADDHDRS | SMFIF_CHGBODY | SMFIF_ADDRCPT | SMFIF_DELRCPT | SMFIF_CHGHDRS | SMFIF_QUARANTINE
 )
 
+// Display ActionFlag as string for debug purpose
+func (a *ActionFlag)String()(string) {
+	var flags []string
+
+	if *a & SMFIF_ADDHDRS != 0    { flags = append(flags, "ADDHDRS") }
+	if *a & SMFIF_CHGBODY != 0    { flags = append(flags, "CHGBODY") }
+	if *a & SMFIF_ADDRCPT != 0    { flags = append(flags, "ADDRCPT") }
+	if *a & SMFIF_DELRCPT != 0    { flags = append(flags, "DELRCPT") }
+	if *a & SMFIF_CHGHDRS != 0    { flags = append(flags, "CHGHDRS") }
+	if *a & SMFIF_QUARANTINE != 0 { flags = append(flags, "QUARANTINE") }
+
+	return strings.Join(flags, "|")
+}
+
 type ProtocolFlag uint32
 
 // SMFIP means Sendmail Milter Functions Protocol Flags. These constants are
@@ -219,6 +252,21 @@ const (
 	SMFIP_NOEOH ProtocolFlag = ProtocolFlag(0x40)
 )
 
+// Display ProtocolFlag as string for debug purpose
+func (p *ProtocolFlag)String()(string) {
+	var flags []string
+
+	if *p & SMFIP_NOCONNECT != 0 { flags = append(flags, "NOCONNECT") }
+	if *p & SMFIP_NOHELO != 0    { flags = append(flags, "NOHELO") }
+	if *p & SMFIP_NOMAIL != 0    { flags = append(flags, "NOMAIL") }
+	if *p & SMFIP_NORCPT != 0    { flags = append(flags, "NORCPT") }
+	if *p & SMFIP_NOBODY != 0    { flags = append(flags, "NOBODY") }
+	if *p & SMFIP_NOHDRS != 0    { flags = append(flags, "NOHDRS") }
+	if *p & SMFIP_NOEOH != 0     { flags = append(flags, "NOEOH") }
+
+	return strings.Join(flags, "|")
+}
+
 // Define milter actions
 type ActionCode byte
 const (
@@ -229,6 +277,14 @@ const (
 	AC_TEMPFAIL ActionCode  = ActionCode('t')
 	AC_REPLYCODE ActionCode = ActionCode('y')
 )
+
+// Display ActionCode as string for debug purpose
+func (ac *ActionCode)String()(string) {
+	var msgType MsgType
+
+	msgType = MsgType(*ac)
+	return msgType.String()
+}
 
 // Define milter modifications
 type ModificationCode byte
@@ -241,11 +297,25 @@ const (
 	MC_QUARANTINE ModificationCode = ModificationCode('q')
 )
 
+// Display ModificationCode as string for debug purpose
+func (m *ModificationCode)String()(string) {
+	var msgType MsgType
+
+	msgType = MsgType(*m)
+	return msgType.String()
+}
+
 // define milter protocol negociation message
 type MsgOptNeg struct {
 	Version uint32 // use MilterVersion
 	Actions ActionFlag // use SMFIF_* constants
 	Protocol ProtocolFlag // use SMFIP_* constants
+}
+
+// Display MsgOptNeg as string for debug purpose
+func (m *MsgOptNeg)String()(string) {
+	return fmt.Sprintf("version=%d actions=%s, protocol=%s",
+	                   m.Version, m.Actions.String(), m.Protocol.String())
 }
 
 // define reply code message content
@@ -254,11 +324,21 @@ type MsgReply struct {
 	Reason string
 }
 
+// Display MsgReply as string for debug purpose
+func (m *MsgReply)String()(string) {
+	return fmt.Sprintf("code=%d, reason=%s", m.Code, qt(m.Reason))
+}
+
 // This struct define the Add Header modification. Name is the Name of the
 // header to add, and Value is its value.
 type MsgAddHeader struct {
 	Name string
 	Value string
+}
+
+// Display MsgAddHeader as string for debug purpose
+func (m *MsgAddHeader)String()(string) {
+	return fmt.Sprintf("name=%s, value=%s", qt(m.Name), qt(m.Value))
 }
 
 // This struct defines an header which change the content. Index is the index
@@ -275,6 +355,12 @@ type MsgChgHeader struct {
 	Value string
 }
 
+// Display MsgChgHeader as string for debug purpose
+func (m *MsgChgHeader)String()(string) {
+	return fmt.Sprintf("name=%s, index=%d, value=%s",
+	                   qt(m.Name), m.Index, qt(m.Value))
+}
+
 // contains data for CONNECT message
 type MsgConnect struct {
 	Hostname string
@@ -283,16 +369,32 @@ type MsgConnect struct {
 	Address string
 }
 
+// Display MsgConnect as string for debug purpose
+func (m *MsgConnect)String()(string) {
+	return fmt.Sprintf("hostname=%s, family=%s, address=%s, port=%d",
+	                   qt(m.Hostname), m.Family.String(), qt(m.Address), m.Port)
+}
+
 // Contains data for HEADER Message
 type MsgHeader struct {
 	Name string
 	Value string
 }
 
+// Display MsgHeader as string for debug purpose
+func (m *MsgHeader)String()(string) {
+	return fmt.Sprintf("name=%s, value=%s", qt(m.Name), qt(m.Value))
+}
+
 // contains data for MAIL and RCPT messages
 type MsgMail struct {
 	Address string
 	Args []string
+}
+
+// Display MsgMail as string for debug purpose
+func (m *MsgMail)String()(string) {
+	return fmt.Sprintf("address=%s, args=%s", qt(m.Address), qt(strings.Join(m.Args, ",")))
 }
 
 // This struct contains and action. An action is sent as response by milter to
@@ -321,6 +423,14 @@ type Action struct {
 	Value *MsgReply
 }
 
+// Display Action as string for debug purpose
+func (action *Action)String()(string) {
+	if action.Action == AC_REPLYCODE {
+		return fmt.Sprintf("%s %s\n", action.Action.String(), action.Value.String())
+	}
+	return action.Action.String()
+}
+
 // This struct contains a modification requirement. A modification is sent as
 // response by the milter to the MTA. Kind of modification is defined by
 // constants MC_* of type ModificationCode. The fiels Value depends of the kind
@@ -346,6 +456,23 @@ type Action struct {
 type Modification struct {
 	Modification ModificationCode
 	Value interface{}
+}
+
+// Display Modification as string for debug purpose
+func (mod *Modification)String()(string) {
+	switch mod.Modification {
+	case MC_ADDRCPT,
+	     MC_DELRCPT,
+	     MC_REPLBODY:
+		return fmt.Sprintf("%s value=%s", mod.Modification.String(), qt(mod.Value.(string)))
+	case MC_ADDHEADER:
+		return fmt.Sprintf("%s %s", mod.Modification.String(), mod.Value.(*MsgAddHeader).String())
+	case MC_CHGHEADER:
+		return fmt.Sprintf("%s %s", mod.Modification.String(), mod.Value.(*MsgChgHeader).String())
+	case MC_QUARANTINE:
+		return fmt.Sprintf("%s", mod.Modification.String())
+	}
+	return ""
 }
 
 func null_terminated_string(msg []byte, pos int)(int, string) {
@@ -1672,4 +1799,3 @@ func EncodeReplyCode(reply *MsgReply)([]byte) {
 
 	return msg
 }
-

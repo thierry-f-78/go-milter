@@ -2,10 +2,19 @@
 
 package milter
 
+import "fmt"
+
 type Macro struct {
 	Step MacroStep
 	Name string
 	Value string
+}
+
+func (m *Macro)String()(string) {
+	var msgType MsgType
+
+	msgType = MsgType(m.Step)
+	return fmt.Sprintf("step=%s, name=%s, value=%s", msgType.String(), qt(m.Name), qt(m.Value))
 }
 
 func macroAdd(macros *[]*Macro, step MacroStep, name string, value string)() {
@@ -34,6 +43,16 @@ func macroGet(macros []*Macro, name string)(MacroStep, string) {
 		}
 	}
 	return 0, ""
+}
+
+func macroDebug(macros []*Macro)() {
+	var m *Macro
+	var msgType MsgType
+
+	for _, m = range macros {
+		msgType = msgType
+		fmt.Printf("%s\n", m.String())
+	}
 }
 
 // 'C'	SMFIC_CONNECT	$_ $j ${daemon_name} ${if_name} ${if_addr}
