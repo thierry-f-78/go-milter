@@ -16,6 +16,7 @@ func qt(in string)(string) {
 }
 
 const MilterVersion = 2
+const BodyChunkSize = 65535
 
 // Define constant for each milter message, note the constant is a byte, this
 // byte is exactly the byte used by the milter protocol.
