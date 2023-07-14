@@ -250,6 +250,7 @@ const (
 	SMFIP_NOBODY ProtocolFlag = ProtocolFlag(0x10)
 	SMFIP_NOHDRS ProtocolFlag = ProtocolFlag(0x20)
 	SMFIP_NOEOH ProtocolFlag = ProtocolFlag(0x40)
+	SMFIP_ALL ProtocolFlag = SMFIP_NOCONNECT | SMFIP_NOHELO | SMFIP_NOMAIL | SMFIP_NORCPT | SMFIP_NOBODY | SMFIP_NOHDRS | SMFIP_NOEOH
 )
 
 // Display ProtocolFlag as string for debug purpose
