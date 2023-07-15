@@ -397,6 +397,66 @@ func ActionReplyCode(code int, reason string)(*Action) {
 	return &Action{Action: AC_REPLYCODE, Value: &MsgReply{Code: code, Reason: reason}}
 }
 
+// Build ADDRCPT struct for Exchange API
+func ModificationAddRcpt(rcpt string)(*Modification) {
+	return &Modification{
+		Modification: MC_ADDRCPT,
+		Value: rcpt,
+	}
+}
+
+// Build DELRCPT struct for Exchange API
+func ModificationDelRcpt(rcpt string)(*Modification) {
+	return &Modification{
+		Modification: MC_DELRCPT,
+		Value: rcpt,
+	}
+}
+
+// Build ADDHDRS struct for Exchange API
+func ModificationAddHeader(name string, value string)(*Modification) {
+	return &Modification{
+		Modification: MC_ADDHEADER,
+		Value: &MsgAddHeader{
+			Name: name,
+			Value: value,
+		},
+	}
+}
+
+// Build CHGHDRS struct for Exchange API
+func ModificationChgHeader(index uint32, name string, value string)(*Modification) {
+	return &Modification{
+		Modification: MC_CHGHEADER,
+		Value: &MsgChgHeader{
+			Index: index,
+			Name: name,
+			Value: value,
+		},
+	}
+}
+
+// Build CHGHDRS (delete convenience) struct for Exchange API
+func ModificationDelHeader(index uint32, name string)(*Modification) {
+	return ModificationChgHeader(index, name, "")
+}
+
+// Build QUARANTINE struct for Exchange API
+func ModificationQuarantine(reason string)(*Modification) {
+	return &Modification{
+		Modification: MC_QUARANTINE,
+		Value: reason,
+	}
+}
+
+// Build CHGBODY struct for Exchange API
+func ModificationReplBody(body []byte)(*Modification) {
+	return &Modification{
+		Modification: MC_REPLBODY,
+		Value: body,
+	}
+}
+
 // This function send generic *Modification
 func (srv *Server)SendModification(modification *Modification)(error) {
 	switch modification.Modification {
