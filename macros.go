@@ -47,10 +47,8 @@ func macroGet(macros []*Macro, name string)(MacroStep, string) {
 
 func macroDebug(macros []*Macro)() {
 	var m *Macro
-	var msgType MsgType
 
 	for _, m = range macros {
-		msgType = msgType
 		fmt.Printf("%s\n", m.String())
 	}
 }
