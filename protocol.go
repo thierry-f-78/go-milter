@@ -712,10 +712,12 @@ func Decode(msg []byte)(MsgType, interface{}, error) {
 			pos += 2
 		}
 
-		// read string for address
-		pos, connect.Address = null_terminated_string(msg, pos)
-		if pos == -1 {
-			return SMFIR_ERROR, nil, fmt.Errorf("receive message <%s> expect 2nd NULL terminated message", msgType.String())
+		// read string for address (SMFIA_UNKNOWN: Omits "port" and "host" fields entirely)
+		if connect.Family != SMFIA_UNKNOWN {
+			pos, connect.Address = null_terminated_string(msg, pos)
+			if pos == -1 {
+				return SMFIR_ERROR, nil, fmt.Errorf("receive message <%s> expect 2nd NULL terminated message", msgType.String())
+			}
 		}
 
 		// Check full message eaten
