@@ -703,12 +703,14 @@ func Decode(msg []byte)(MsgType, interface{}, error) {
 		}
 		pos++
 
-		// Read two bytes for port
-		if pos + 2 > len(msg) {
-			return SMFIR_ERROR, nil, fmt.Errorf("receive message <%s> expect 2 bytes for port number", msgType.String())
+		// Read two bytes for port (SMFIA_INET or SMFIA_INET6 only)
+		if connect.Family == SMFIA_INET || connect.Family ==  SMFIA_INET6 {
+			if pos + 2 > len(msg) {
+				return SMFIR_ERROR, nil, fmt.Errorf("receive message <%s> expect 2 bytes for port number", msgType.String())
+			}
+			connect.Port = int(binary.BigEndian.Uint16(msg[pos:]))
+			pos += 2
 		}
-		connect.Port = int(binary.BigEndian.Uint16(msg[pos:]))
-		pos += 2
 
 		// read string for address
 		pos, connect.Address = null_terminated_string(msg, pos)
